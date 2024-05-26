@@ -1,0 +1,274 @@
+---
+title: "Treeherder intergenerational share model"
+runtime: shiny
+output:
+  flexdashboard::flex_dashboard:
+    navbar:
+      - { title: "treeherder.co.nz", href: "https://treeherder.co.nz", align: right }
+    orientation: rows
+    vertical_layout: fill
+    theme: spacelab
+    source_code: embed 
+---
+<style>
+
+body {
+  padding-top: 70px;
+}
+
+
+.navbar-brand {
+font-family: "Candara";
+  font-weight: bold;
+  font-size: 24px;
+}
+
+
+</style>
+
+
+```{r}
+library(shiny)
+library(flexdashboard)
+library(tidyverse)
+library(gridExtra)
+```
+
+
+
+
+General
+=====================================
+
+Column {.sidebar data-width=450}
+-------------------------------------
+
+**Notes:**
+
+*The following widgets assume that the harvest is sustainable (e.g. estimable from mean annual increment), the share price is initially $1 at year zero, and a continuous cover forestry rather than a clear cutting is approach applied.*
+
+*Any area can be assumed (as the harvest volume will be area dependent) but it maybe useful to envisage 100 ha.*
+
+
+*(Dollar values do not incorporate inflation)*
+
+<br/>
+
+```{r}
+
+sliderInput("maturity_age", label = "Harvestable age",
+            min = 20, max = 120, step = 1, value = 63)
+
+share_initial <- 1
+
+sliderInput("shares_no", label = HTML("Number shares (millions)"), value = 2, min = 0.2, max= 3,
+            step = 0.2)
+
+sliderInput("harvest.vol", label = HTML("Sustainable annual harvest<br/> (cubic m per year)"),
+            min = 0, max = 1000, step = 10, value = 200, ticks = FALSE)
+
+sliderInput("log_profit", label = "Profit per cubic metre",
+            min = 0, max = 1600, step = 10, value = 300, ticks = FALSE)
+```
+
+<br/>
+
+**Solution via optimisation  (annual return %)**
+
+```{r}
+
+renderPrint({
+  
+my.func <- function(x){
+  
+  lambda <- seq(from = 0.99, to = 1.2, by = 0.00001)
+  
+  abs((input$harvest.vol  * input$log_profit) / (input$shares_no*10^6 * (share_initial * x^(input$maturity_age +1))) - (x-1))
+}
+
+my.optim <- optim(1, my.func, method = "Nelder-Mead")
+
+cat((my.optim$par - 1) *100)
+
+
+})
+
+
+```
+
+Column
+-------------------------------------
+
+
+```{r}
+# brute force approach
+
+my.theme <-   theme(plot.title = element_text(size = 20, face = 2)) +
+  theme(plot.subtitle = element_text(size = 16)) +
+  theme(axis.title = element_text(size = 16)) +
+  theme(axis.text = element_text(size = 14)) +
+  theme(legend.title = element_text(size = 16)) +
+  theme(legend.text = element_text(size = 14))
+
+
+renderPlot({
+  lambda <- seq(from = 0.99, to = 1.2, by = 0.00001)
+  difference <-
+    (input$harvest.vol  * input$log_profit) / (input$shares_no*10^6 * (share_initial * lambda ^
+                                                                    (input$maturity_age + 1))) - (lambda - 1)
+  difference <- abs(difference)
+  
+  
+  df <- data.frame(lambda, difference)
+  df$percent <- (df$lambda - 1) * 100
+  
+  df
+  
+  
+  # graphical elements
+  target.lambda <- df[which.min(df$difference), ][1] %>% as.numeric()
+  target.percent <- df[which.min(df$difference), ][3] %>% as.numeric()
+  target.difference <-
+    df[which.min(df$difference), ][2] %>% as.numeric()
+  
+  
+  optimisation <- ggplot() +
+    theme_bw() +
+    geom_line(data = df, aes(x = percent, y = difference)) +
+    geom_point(
+      aes(x = target.percent , y = target.difference),
+      colour = "red",
+      size = 5,
+      alpha = 0.5
+    ) +
+    geom_vline(xintercept = 0,
+               colour = "red",
+               linetype = "dotted") +
+    ggtitle(paste0("Optimised: annual return = ", round(target.percent, 2) , "%")) +
+    labs(subtitle = paste("\n\n\n\n"))+
+    
+    #  scale_y_log10()+
+    scale_x_continuous(breaks = seq(from = -1, to = 20, by = 1)) +
+    xlab("\n\n\nReturn (%)") +
+    ylab("absolute difference between \nharvest return and annual share growth\n") +
+    my.theme
+  
+  
+  
+  
+  # capital growth phase
+  years <- 0:input$maturity_age
+  share.price <- target.lambda ^ years
+  capital.growth <- data.frame(years, share.price)
+  
+  capital.growth$increment <-
+    ifelse(years == 0,
+           NA,
+           target.lambda ^ (years) - target.lambda ^ (years - 1))
+  capital.growth$initial <-  capital.growth$share.price / target.lambda
+  capital.growth$initial <-
+    ifelse(years == 0, NA, capital.growth$initial)
+  capital.growth$rebate <- 0
+  
+  
+  
+  # rebate phase
+  years <- (input$maturity_age + 1):(input$maturity_age + 21)
+  rebate.prop <-
+    (input$harvest.vol * input$log_profit) / (target.lambda ^ input$maturity_age * input$shares_no *10^6)
+  share.price <- 1 * target.lambda ^ input$maturity_age
+  stable.growth <- data.frame(years, share.price)
+  stable.growth$increment <- 0
+  stable.growth$initial <- share.price
+  stable.growth$rebate <- rebate.prop * share.price
+  
+  # bind
+  all <- rbind(capital.growth, stable.growth)
+  
+  all_longer <- all %>% pivot_longer(cols = increment:rebate,
+                                     names_to = "type",
+                                     values_to = "value")
+  
+  all_longer$type <- as.factor(all_longer$type)
+  
+  
+  all_longer$type <-
+    factor(all_longer$type, levels = c("increment", "rebate", "initial"))
+  
+  all_longer <- all_longer %>% mutate(type = fct_recode(type,
+                                                        "capital gain" = "increment"))
+  
+  all_longer$value <-
+    ifelse(is.na(all_longer$value) &
+             all_longer$type == "initial",
+           1,
+           all_longer$value)
+  
+  all_longer
+  
+  
+  realisation <-  ggplot() +
+    theme_bw() +
+    geom_col(data = all_longer, aes(x = years, y = value, fill = type)) +
+    scale_fill_manual(values = c("purple", "forestgreen", "grey90")) +
+    ggtitle(paste0("Projection: annual return = ", round(target.percent, 2) , "%")) +
+    labs(
+      fill = "Contribution:  ",
+      subtitle =
+        paste0(
+          "maturity age = ",
+          input$maturity_age,
+          " years",
+          "\nannual harvest volume = " ,
+          input$harvest.vol,
+          " cubic meters",
+          "\nprice per cubic meter (after costs) = $",
+          input$log_profit,
+          "\nnumber of shares = ",
+          scales::comma(input$shares_no *10^6),
+          "\nshare value at year ",
+          input$maturity_age,
+          " = $",
+          round(target.lambda ^ input$maturity_age, 2)
+        )
+    ) +
+    scale_y_continuous(breaks = scales::pretty_breaks(10)) +
+    scale_x_continuous(breaks = scales::pretty_breaks(10)) +
+    xlab("\nYears") +
+    ylab("capital value + rebates\n") +
+    theme(panel.grid.minor = element_blank()) +
+    theme(plot.subtitle = element_text(size = 10)) +
+    theme(plot.title = element_text(face = 2)) +
+    theme(legend.position = "bottom") +
+    coord_cartesian(ylim = c(0.8, max(all_longer$value))) +
+    my.theme +
+    theme(plot.subtitle = element_text("white"))
+  
+  
+  my.figure <- grid.arrange(realisation, optimisation,  nrow = 1)
+  
+  
+  
+  
+}, height = 750)
+```
+
+
+
+Video help
+=====================================
+
+Column {.sidebar data-width=250}
+-------------------------------------
+
+I have made the code for this algorithm open source under an ![MIT license] (https://opensource.org/license/mit). 
+
+The code can be downloaded from GitHub 
+
+Column
+-------------------------------------
+### Dashboard tour
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/9bf6468dd1ef4775b81fc9658319dd06?sid=861417db-3d04-46ac-810d-32acbb3c2d5b" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+
+###  Annual returns in context
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/b8abb6c7b5bb402ba08df0fc9e266692?sid=22a09c11-5d9c-4997-a7d2-6f63736e6c1b" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
