@@ -40,7 +40,7 @@ library(gridExtra)
 General
 =====================================
 
-Column {.sidebar data-width=450}
+Column {.sidebar data-width=400}
 -------------------------------------
 
 **Notes:**
@@ -64,8 +64,8 @@ share_initial <- 1
 sliderInput("shares_no", label = HTML("Number shares (millions)"), value = 2, min = 0.2, max= 3,
             step = 0.2)
 
-sliderInput("harvest.vol", label = HTML("Sustainable annual harvest<br/> (cubic m per year)"),
-            min = 0, max = 1000, step = 10, value = 200, ticks = FALSE)
+sliderInput("harvest.vol", label = HTML("Sustainable annual harvest<br/> (cubic m per 100 ha per year)"),
+            min = 0, max = 1000, step = 10, value = 500, ticks = FALSE)
 
 sliderInput("log_profit", label = "Profit per cubic metre",
             min = 0, max = 1600, step = 10, value = 300, ticks = FALSE)
@@ -86,12 +86,14 @@ my.func <- function(x){
   abs((input$harvest.vol  * input$log_profit) / (input$shares_no*10^6 * (share_initial * x^(input$maturity_age +1))) - (x-1))
 }
 
-my.optim <- optim(1, my.func, method = "Nelder-Mead")
+my.optim <- optim(1, my.func)
 
 cat((my.optim$par - 1) *100)
 
 
 })
+
+
 
 
 ```
@@ -250,7 +252,7 @@ renderPlot({
   
   
   
-}, height = 750)
+}, height = 800)
 ```
 
 
@@ -258,17 +260,23 @@ renderPlot({
 Video help
 =====================================
 
-Column {.sidebar data-width=250}
+Column {.sidebar data-width=300}
 -------------------------------------
 
-I have made the code for this algorithm open source under an ![MIT license] (https://opensource.org/license/mit). 
+**Code**
 
-The code can be downloaded from GitHub 
+The code for the dashboard and algorithm can be downloaded from [GitHub](https://github.com/NathanWhitmore/Treeherder_share_valuation).
 
-Column
+I have made the code open source under an [MIT license](https://opensource.org/license/mit).
+
+The code is also visible in the **</> Source Code** tab in the top right.
+
+ 
+
+Column  {.tabset .tabset-fade}
 -------------------------------------
 ### Dashboard tour
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/9bf6468dd1ef4775b81fc9658319dd06?sid=861417db-3d04-46ac-810d-32acbb3c2d5b" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/953c4cbf9d3e409d812eef1fd14dcc73?sid=43b8782f-2abd-4a1b-a486-111e84774bb1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 80%; height: 80%;"></iframe></div>
 
 ###  Annual returns in context
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/b8abb6c7b5bb402ba08df0fc9e266692?sid=22a09c11-5d9c-4997-a7d2-6f63736e6c1b" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 100%; height: 100%;"></iframe></div>
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/4958a8c7cfd54d9d9382c7ac47144d28?sid=097e9990-9bfc-49e6-91b8-a5cb74c2bfe7" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 80%; height: 80%;"></iframe></div>
