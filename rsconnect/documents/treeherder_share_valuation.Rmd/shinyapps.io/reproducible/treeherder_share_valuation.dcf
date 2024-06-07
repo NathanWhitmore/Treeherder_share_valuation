@@ -5,7 +5,7 @@ account: reproducible
 server: shinyapps.io
 hostUrl: https://api.shinyapps.io/v1
 appId: 12075122
-bundleId: 8663648
+bundleId: 8712733
 url: https://reproducible.shinyapps.io/treeherder_share_valuation/
 version: 1
 asMultiple: FALSE

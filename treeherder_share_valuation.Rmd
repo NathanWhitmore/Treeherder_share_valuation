@@ -276,7 +276,7 @@ The code is also visible in the **</> Source Code** tab in the top right.
 Column  {.tabset .tabset-fade}
 -------------------------------------
 ### Dashboard tour
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/953c4cbf9d3e409d812eef1fd14dcc73?sid=43b8782f-2abd-4a1b-a486-111e84774bb1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 80%; height: 80%;"></iframe></div>
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/953c4cbf9d3e409d812eef1fd14dcc73?sid=975726d9-e58e-4643-aacf-c43f28719dcd" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 80%; height: 80%;"></iframe></div>
 
 ###  Annual returns in context
-<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/4958a8c7cfd54d9d9382c7ac47144d28?sid=097e9990-9bfc-49e6-91b8-a5cb74c2bfe7" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 80%; height: 80%;"></iframe></div>
+<div style="position: relative; padding-bottom: 56.25%; height: 0;"><iframe src="https://www.loom.com/embed/4958a8c7cfd54d9d9382c7ac47144d28?sid=98203f0e-a89c-4560-ac5c-bce41a15c9f1" frameborder="0" webkitallowfullscreen mozallowfullscreen allowfullscreen style="position: absolute; top: 0; left: 0; width: 80%; height: 80%;"></iframe></div>
